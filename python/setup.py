@@ -1,6 +1,7 @@
 """ setup.py for Binary Brain
 """
 
+
 import sys
 import  os
 from os.path import join as pjoin
@@ -29,18 +30,21 @@ major_version = 0
 minor_version = 0
 revision_number = 0
 with open('binarybrain/include/bb/Version.h', 'r', encoding="utf-8") as f:
-    for line in f.readlines():
-        m = re.match(r'\s*#\s*define\s+BB_MAJOR_VERSION\s+([0-9]+)', line)
-        if m:   major_version = int(m.group(1))
-        m = re.match(r'\s*#\s*define\s+BB_MINOR_VERSION\s+([0-9]+)', line)
-        if m:   minor_version = int(m.group(1))
-        m = re.match(r'\s*#\s*define\s+BB_REVISION_NUMBER\s+([0-9]+)', line)
-        if m:   revision_number = int(m.group(1))
-
-__version__ = str(major_version) + '.' + str(minor_version) + '.' + str(revision_number)
+    for line in f:
+        if m := re.match(r'\s*#\s*define\s+BB_MAJOR_VERSION\s+([0-9]+)', line):
+            major_version = int(m.group(1))
+        if m := re.match(r'\s*#\s*define\s+BB_MINOR_VERSION\s+([0-9]+)', line):
+            minor_version = int(m.group(1))
+        if m := re.match(
+            r'\s*#\s*define\s+BB_REVISION_NUMBER\s+([0-9]+)', line
+        ):
+            revision_number = int(m.group(1))
+__version__ = (
+    f'{str(major_version)}.{str(minor_version)}.{str(revision_number)}'
+)
 
 if VERBOSE:
-    print('version = %s' % __version__)
+    print(f'version = {__version__}')
 
 
 
@@ -85,10 +89,7 @@ def search_cuda():
 
     return {'home':cuda_home, 'nvcc':cuda_nvcc, 'include': cuda_include, 'lib': cuda_lib}
 
-if WITH_CUDA:
-    CUDA = search_cuda()
-else:
-    CUDA = None
+CUDA = search_cuda() if WITH_CUDA else None
 
 
 class get_pybind_include(object):
@@ -156,10 +157,10 @@ def hook_compiler(self):
         else:
             postargs = []
         super_compile_(obj, src, ext, cc_args, postargs, pp_opts)
-    
+
     def compile(sources,
-                output_dir=None, macros=None, include_dirs=None, debug=0,
-                extra_preargs=None, extra_postargs=None, depends=None):
+                    output_dir=None, macros=None, include_dirs=None, debug=0,
+                    extra_preargs=None, extra_postargs=None, depends=None):
         
         if VERBOSE:
             print('---------------------')
@@ -182,22 +183,22 @@ def hook_compiler(self):
             macros, objects, extra_postargs, _, _ = \
             self._setup_compile(output_dir, macros, include_dirs,
                             sources, depends, extra_postargs)
-            
+
             # macros
             macs = []
             for mac in macros:
                 if len(mac) >= 2:
-                    macs.append('-D' + mac[0] + '=' + mac[1])
+                    macs.append(f'-D{mac[0]}={mac[1]}')
                 else:
-                    macs.append('-D' + mac[0])
+                    macs.append(f'-D{mac[0]}')
 
             # includes
             incs = []
             if self.compiler_type == 'msvc':
-                incs += ['-I"' + str(inc) + '"' for inc in include_dirs]
+                incs += [f'-I"{str(inc)}"' for inc in include_dirs]
             else:
-                incs += ['-I' + str(inc) for inc in include_dirs]
-            
+                incs += [f'-I{str(inc)}' for inc in include_dirs]
+
             # compile
             objects = []
             for src in sources:
@@ -223,10 +224,10 @@ def hook_compiler(self):
                         extra_preargs, extra_postargs['cc'], depends)
 
     def link(target_desc, objects,
-             output_filename, output_dir=None, libraries=None,
-             library_dirs=None, runtime_library_dirs=None,
-             export_symbols=None, debug=0, extra_preargs=None,
-             extra_postargs=None, build_temp=None, target_lang=None):
+                 output_filename, output_dir=None, libraries=None,
+                 library_dirs=None, runtime_library_dirs=None,
+                 export_symbols=None, debug=0, extra_preargs=None,
+                 extra_postargs=None, build_temp=None, target_lang=None):
 
         if VERBOSE:
             print('---------------------')
@@ -250,14 +251,13 @@ def hook_compiler(self):
 
             lib_dirs = []
             if self.compiler_type == 'msvc':
-                lib_dirs += ['-L"' + str(libdir) + '"' for libdir in library_dirs]
+                lib_dirs += [f'-L"{str(libdir)}"' for libdir in library_dirs]
             else:
-                lib_dirs += ['-L' + str(libdir) for libdir in library_dirs]
-            
+                lib_dirs += [f'-L{str(libdir)}' for libdir in library_dirs]
+
             args = [CUDA['nvcc'], '-shared', '-o', output_filename] + objects + lib_dirs + extra_postargs
             print(' '.join(args))
             subprocess.call(args)
-#           self.spawn(args)
         else:
             super_link(target_desc, objects,
                 output_filename, output_dir, libraries,
