@@ -131,7 +131,7 @@ class Runner:
         self.log_append              = log_append
     
     def fitting(self, td, epoch_size, mini_batch_size=16, file_read=False, file_write=False, write_serial=False, init_eval=False):
-        """fitting
+       """fitting
         
         Args:
             td (TrainData)  : training data set
@@ -139,45 +139,45 @@ class Runner:
             mini_batch_size (int): mini batch size
         """
         
-        log_file_name  = self.name + '_log.txt'
-        json_file_name = self.name + '_net.json'
-        epoch = 0
-        
+       log_file_name = f'{self.name}_log.txt'
+       json_file_name = f'{self.name}_net.json'
+       epoch = 0
+
         # read
-        if file_read:
-            ret = bb.RunStatus.ReadJson(json_file_name, self.net, self.name, epoch)
-            if ret:
-                print('[load] %s'% json_file_name)
-            else:
-                print('[file not found] %s'% json_file_name)
-        
+       if file_read:
+          if ret := bb.RunStatus.ReadJson(json_file_name, self.net, self.name,
+                                          epoch):
+             print(f'[load] {json_file_name}')
+          else:
+             print(f'[file not found] {json_file_name}')
+
         # log start
-        with open(log_file_name, 'a') as log_file:
-            # initial evaluation
-            if init_eval:
-                calculation(self.net, td.x_test, td.x_shape, td.t_test, td.t_shape, mini_batch_size, 1, self.metrics, self.loss)
-                print('[initial] %s=%f loss=%f' % (self.metrics.get_metrics_string(), self.metrics.get_metrics(), self.loss.get_loss()))
-            
+       with open(log_file_name, 'a') as log_file:
+          # initial evaluation
+          if init_eval:
+              calculation(self.net, td.x_test, td.x_shape, td.t_test, td.t_shape, mini_batch_size, 1, self.metrics, self.loss)
+              print('[initial] %s=%f loss=%f' % (self.metrics.get_metrics_string(), self.metrics.get_metrics(), self.loss.get_loss()))
+
             # loop
-            for _ in range(epoch_size):
-                # increment
-                epoch = epoch + 1
-                
-                # train
-                calculation(self.net, td.x_train, td.x_shape, td.t_train, td.t_shape, mini_batch_size, mini_batch_size,
-                            self.metrics, self.loss, self.optimizer, train=True, print_loss=True, print_metrics=True)
-                
+          for _ in range(epoch_size):
+             # increment
+             epoch = epoch + 1
+
+             # train
+             calculation(self.net, td.x_train, td.x_shape, td.t_train, td.t_shape, mini_batch_size, mini_batch_size,
+                         self.metrics, self.loss, self.optimizer, train=True, print_loss=True, print_metrics=True)
+
                 # write file
-                if file_write:
-                    ret = bb.RunStatus.WriteJson(json_file_name, self.net, self.name, epoch)
-                    if not ret:
-                        print('[write error] %s'% json_file_name)
-                
-                # evaluation
-                calculation(self.net, td.x_test, td.x_shape, td.t_test, td.t_shape, mini_batch_size, 1, self.metrics, self.loss)
-                output_text = 'epoch=%d %s=%f loss=%f' % (epoch, self.metrics.get_metrics_string(), self.metrics.get_metrics(), self.loss.get_loss())
-                print(output_text)
-                print(output_text, file=log_file)
+             if file_write:
+                ret = bb.RunStatus.WriteJson(json_file_name, self.net, self.name, epoch)
+                if not ret:
+                   print(f'[write error] {json_file_name}')
+
+             # evaluation
+             calculation(self.net, td.x_test, td.x_shape, td.t_test, td.t_shape, mini_batch_size, 1, self.metrics, self.loss)
+             output_text = 'epoch=%d %s=%f loss=%f' % (epoch, self.metrics.get_metrics_string(), self.metrics.get_metrics(), self.loss.get_loss())
+             print(output_text)
+             print(output_text, file=log_file)
     
     def evaluation(self, td, mini_batch_size=16):
         """evaluation
